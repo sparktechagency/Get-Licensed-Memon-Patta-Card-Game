@@ -2,7 +2,7 @@
 
 Status legend: `[ ]` to do · `[x]` done
 
-Derived from the UI mockups (`Frame 1.pdf`) and current repo state (blank Unity 2D URP project, no gameplay code yet).
+Derived from the UI mockups (`Frame 1.pdf`) and current repo state. See [README.md](README.md) for the project overview and tech stack.
 
 ## Core Gameplay
 
@@ -17,7 +17,7 @@ Derived from the UI mockups (`Frame 1.pdf`) and current repo state (blank Unity 
 ## Screens / UI Implementation
 
 - [ ] Splash screen ("GET LICENSED — MEMON PATTA" logo + Play button)
-- [ ] Home screen (avatar, level/XP bar, Practice, Online, Daily Challenge, Statistics, Leaderboards, Weekly Challenges, Premium, bottom nav)
+- [x] Home screen (avatar, level/XP bar, Practice, Online, Daily Challenge, Statistics, Leaderboards, Weekly Challenges, Premium, bottom nav) — placeholder UI in `Assets/Scenes/MainMenu.unity`
 - [ ] Practice setup modal (Easy / Medium / Hard difficulty cards, deck type selector, Start Practice)
 - [ ] Online setup modal (Local play / Rank Play)
 - [ ] Rank Play lobby (Ranked/Casual tabs, current rank badge, Quick Match, Create Room, game room list with entry fees, season countdown + rewards)
@@ -29,18 +29,21 @@ Derived from the UI mockups (`Frame 1.pdf`) and current repo state (blank Unity 
 
 ## Progression & Social
 
-- [ ] Player level & XP system
-- [ ] Daily challenge system (e.g. "Win 2 Rounds" with XP reward)
-- [ ] Weekly challenges system
-- [ ] Achievements system (e.g. First Win, Card Master, Unstoppable, Pro Player) with unlock tracking
-- [ ] Friends system: add friend, requests, invites, recent, online/offline status
-- [ ] Challenge-a-friend flow
+- [x] Player level & XP system — `PlayFabPlayerDataService` (profile stored as UserData JSON, level-up math client-side)
+- [x] Daily challenge system (e.g. "Win 2 Rounds" with XP reward) — `PlayFabChallengesService`
+- [x] Weekly challenges system — `PlayFabChallengesService`
+- [x] Achievements system (e.g. First Win, Card Master, Unstoppable, Pro Player) with unlock tracking — `PlayFabChallengesService`
+- [x] Friends system: add friend, recent, online/offline status — `PlayFabFriendsService` (add/remove/list only; PlayFab has no native pending-request state)
+- [ ] Friend Requests/Invites tabs (needs custom pending-request store — PlayFab AddFriend links immediately, no request state)
+- [ ] Challenge-a-friend flow (stubbed in `PlayFabFriendsService.ChallengeFriend` — needs a realtime invite/matchmaking transport)
 - [ ] Invite friends (referral rewards)
-- [ ] Global / Friends / Country leaderboard ranking logic
+- [x] Global / Friends leaderboard — `PlayFabStatisticsService` (PlayFab GetLeaderboard / GetFriendLeaderboard)
+- [ ] Country leaderboard (stubbed as an unfiltered sample — PlayFab has no native per-country leaderboard; needs CloudScript/Azure Function aggregation)
 
 ## Online / Multiplayer
 
-- [ ] Backend/networking setup (auth, matchmaking, real-time play)
+- [x] Backend auth — `PlayFabManager` (LoginWithCustomID, device-based)
+- [ ] Real-time matchmaking / networking transport (PlayFab Matchmaker SDK module is installed but not wired up)
 - [ ] Rank Play matchmaking (Quick Match)
 - [ ] Custom room creation & join-by-room (with entry fee/stakes: Pro Room, Master Table, Challenger Arena, Ace Room)
 - [ ] Ranked vs Casual play modes
@@ -48,18 +51,30 @@ Derived from the UI mockups (`Frame 1.pdf`) and current repo state (blank Unity 
 
 ## Monetization
 
-- [ ] Premium membership system & rewards
-- [ ] In-app currency / entry-fee economy for game rooms
+- [x] Premium membership entitlement + virtual currency — `PlayFabEconomyService` (classic Catalog/Inventory model; Economy v2 SDK module installed but not used yet)
+- [x] In-app currency spend/grant for game room entry fees — `PlayFabEconomyService.SpendCurrency` / `GrantCurrency`
 
 ## Technical / Infrastructure
 
-- [ ] Project architecture setup (folder structure, namespaces, core managers)
-- [ ] Save/load system for player profile & progress
-- [ ] Backend service integration (accounts, leaderboards, social)
+- [x] Project architecture setup (folder structure, namespaces, core managers) — `Assets/Scripts/PlayFab/` (`MemonPatta.PlayFabServices` namespace)
+- [x] Save/load system for player profile & progress — PlayFab UserData (client-authoritative for now; server validation via CloudScript is a follow-up)
+- [x] Backend service integration (accounts, leaderboards, social) — PlayFab SDK wired up (see `Assets/Scripts/PlayFab/`)
 - [ ] Import UI mockups/art assets into `Assets/`
-- [ ] Set up UI framework (Canvas/UGUI or UI Toolkit) matching mockup style (dark green + gold theme)
-- [ ] Establish scenes: Splash, Home/Main Menu, Practice, Online Lobby, Match/Gameplay, Profile
+- [x] Set up UI framework (Canvas/UGUI or UI Toolkit) matching mockup style (dark green + gold theme) — UGUI + TextMeshPro, see `Assets/Scenes/MainMenu.unity`
+- [ ] Establish remaining scenes: Splash, Practice, Online Lobby, Match/Gameplay, Profile
+
+## PlayFab Scripts (`Assets/Scripts/PlayFab/`)
+
+- `PlayFabManager.cs` — session bootstrap, device login, exposes `PlayFabId` / `IsLoggedIn`
+- `PlayFabDataModels.cs` — shared serializable data shapes + UserData/Statistic key constants
+- `PlayFabPlayerDataService.cs` — profile (display name, level, XP, avatar, country)
+- `PlayFabStatisticsService.cs` — match result reporting + Global/Friends/Country leaderboards
+- `PlayFabFriendsService.cs` — friends list, add/remove, challenge-friend stub
+- `PlayFabChallengesService.cs` — daily/weekly challenge progress + claim, achievement tracking
+- `PlayFabEconomyService.cs` — virtual currency balance, room entry fee spend, Premium purchase
+
+**Known gaps / follow-ups:** TitleId is not yet configured in `PlayFabSharedSettings.asset` (set it via Window > PlayFab > Editor Extensions before testing). All reward/progress writes are currently client-authoritative — move XP grants, challenge claims, and achievement unlocks into PlayFab CloudScript once available, so a modified client can't grant itself rewards. No UI is wired to these services yet — [MainMenu.unity](Assets/Scenes/MainMenu.unity) is still static placeholder text.
 
 ## Not Yet Started
 
-Everything above — the project currently contains only the default Unity 2D URP template (blank sample scene, default render settings, no custom code or assets).
+Card game rules engine, AI opponents, card board UI/rendering, remaining screens (Practice/Online modals, Rank lobby, Leaderboards, Friends, Profile), real-time matchmaking, rooms, seasons, and wiring the PlayFab services above into the actual UI.
